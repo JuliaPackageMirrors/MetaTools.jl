@@ -1,71 +1,71 @@
-module CommutativeTests
+using RunTests
+using Base.Test
+import MetaTools.@commutative
 
-using MetaTools
-using FactCheck
+@testmodule CommutativeTests begin
+  using MetaTools
 
-module MetaTestModule1
-  function baz()
+  module MetaTestModule1
+    function baz()
+    end
+    function boo()
+    end
   end
-  function boo()
-  end
-end
 
-facts("MetaTools.@commutative tests") do
-  context("@commutative method") do
+  function commutative_method()
     @commutative function foo(s::String, i::Integer)
       return "$s -> $i"
     end
 
-    @fact length(methods(foo)) => 2
-    @fact foo("hello", 42) => "hello -> 42"
-    @fact foo(42, "hello") => "hello -> 42"
+    @test length(methods(foo)) == 2
+    @test foo("hello", 42) == "hello -> 42"
+    @test foo(42, "hello") == "hello -> 42"
   end
 
-  context("@commutative with wrong type of function") do
-    @fact_throws eval(:(@commutative function foo(s::String) end))
-    @fact_throws eval(:(@commutative function foo(s1::String, s2::String) end))
-    @fact_throws eval(:(@commutative function foo(s::String, i::Integer...) end))
-    @fact_throws eval(:(@commutative function foo(s::String, i::Integer=10) end))
-    @fact_throws eval(:(@commutative function foo(s1::String, s2::Integer, s3::FloatingPoint) end))
-    @fact_throws eval(:(@commutative function foo(s::String, i::Integer; special=false) end))
-    @fact_throws eval(:(@commutative function(s::String, i::Integer) end))
-    @fact_throws eval(:(@commutative (s::String, i::Integer) -> begin end))
+  function commutative_with_wrong_type_of_function()
+    @test_throws eval(:(@commutative function foo(s::String) end))
+    @test_throws eval(:(@commutative function foo(s1::String, s2::String) end))
+    @test_throws eval(:(@commutative function foo(s::String, i::Integer...) end))
+    @test_throws eval(:(@commutative function foo(s::String, i::Integer=10) end))
+    @test_throws eval(:(@commutative function foo(s1::String, s2::Integer, s3::FloatingPoint) end))
+    @test_throws eval(:(@commutative function foo(s::String, i::Integer; special=false) end))
+    @test_throws eval(:(@commutative function(s::String, i::Integer) end))
+    @test_throws eval(:(@commutative (s::String, i::Integer) -> begin end))
   end
 
-  context("@commutative shorthand method") do
+  function commutative_shorthand_method()
     @commutative bar(s::String, i::Integer) = "$s -> $i"
 
-    @fact length(methods(bar)) => 2
-    @fact bar("hello", 42) => "hello -> 42"
-    @fact bar(42, "hello") => "hello -> 42"
+    @test length(methods(bar)) == 2
+    @test bar("hello", 42) == "hello -> 42"
+    @test bar(42, "hello") == "hello -> 42"
   end
 
-  context("@commutative method in namespace") do
+  function commutative_method_in_namespace()
     @commutative function MetaTestModule1.baz(s::String, i::Integer)
       return "$s -> $i"
     end
 
-    @fact MetaTestModule1.baz("hello", 42) => "hello -> 42"
-    @fact MetaTestModule1.baz(42, "hello") => "hello -> 42"
+    @test MetaTestModule1.baz("hello", 42) == "hello -> 42"
+    @test MetaTestModule1.baz(42, "hello") == "hello -> 42"
   end
 
-  context("@commutative shorthand method in namespace") do
+  function commutative_shorthand_method_in_namespace()
     @commutative MetaTestModule1.boo(s::String, i::Integer) = "$s -> $i"
 
-    @fact MetaTestModule1.boo("hello", 42) => "hello -> 42"
-    @fact MetaTestModule1.boo(42, "hello") => "hello -> 42"
+    @test MetaTestModule1.boo("hello", 42) == "hello -> 42"
+    @test MetaTestModule1.boo(42, "hello") == "hello -> 42"
   end
 
-  context("@commutative method with an Any arg makes 3 methods") do
+  function commutative_method_with_an_any_arg_makes_3_methods()
     @commutative function hmmm(a::Any, s::String)
       return "$s -> $a"
     end
 
-    @fact length(methods(hmmm)) => 3
-    @fact hmmm("hello", "world") => "hello -> world"
-    @fact hmmm("hello", 42) => "hello -> 42"
-    @fact hmmm(42, "hello") => "hello -> 42"
+    @test length(methods(hmmm)) == 3
+    @test hmmm("hello", "world") == "hello -> world"
+    @test hmmm("hello", 42) == "hello -> 42"
+    @test hmmm(42, "hello") == "hello -> 42"
   end
-end
 
 end

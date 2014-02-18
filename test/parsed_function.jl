@@ -1,9 +1,10 @@
-module ParsedFunctionTests
+using RunTests
+using Base.Test
+import MetaTools.@commutative
+
+@testmodule ParsedFunctionTests begin
 
 using MetaTools
-using FactCheck
-
-import MetaTools.@commutative
 
 type AnyLineNumber end
 
@@ -28,1435 +29,1431 @@ module MetaTestModule1
   end
 end
 
-
-for (test_function, description) in [(ParsedFunction, "ParsedFunction tests"),
-                                     (x->ParsedFunction(emit(ParsedFunction(x))), "ParsedFunction->emit->ParsedFunction roundtrip tests")]
-  facts(description) do
-    context("Empty method with no args") do
-      func = test_function(:(function hello() end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with no args and bracketed name") do
-      func = test_function(:(function (hello)() end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with one untyped arg") do
-      func = test_function(:(function hello(x) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty method with two untyped args") do
-      func = test_function(:(function hello(x,y) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty method with one typed arg") do
-      func = test_function(:(function hello(x::Integer) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty method with two typed args") do
-      func = test_function(:(function hello(x::Integer, y::FloatingPoint) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty method with one union typed arg") do
-      func = test_function(:(function hello(x::Union(Integer,FloatingPoint)) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty method with one untyped default arg") do
-      func = test_function(:(function hello(x=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty method with two untyped default args") do
-      func = test_function(:(function hello(x=100,y=200) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact func.args[2].default => 200
-    end
-
-    context("Empty method with one typed default arg") do
-      func = test_function(:(function hello(x::Integer=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty method with two typed default args") do
-      func = test_function(:(function hello(x::Integer=100, y::FloatingPoint=200.0) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact func.args[2].default => 200.0
-    end
-
-    context("Empty method with one untyped vararg") do
-      func = test_function(:(function hello(x...) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty method with one typed vararg") do
-      func = test_function(:(function hello(x::Integer...) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty method with one untyped default vararg") do
-      func = test_function(:(function hello(x...=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty method with one typed default vararg") do
-      func = test_function(:(function hello(x::Integer...=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty method with one untyped kwarg") do
-      func = test_function(:(function hello(;x=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty method with two untyped kwargs") do
-      func = test_function(:(function hello(;x=100,y=200) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 2
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :y
-      @fact func.kwargs[2].typ => :Any
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200
-    end
-
-    context("Empty method with one typed kwarg") do
-      func = test_function(:(function hello(;x::Integer=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty method with two typed kwargs") do
-      func = test_function(:(function hello(;x::Integer=100, y::FloatingPoint=200.0) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 2
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :y
-      @fact func.kwargs[2].typ => :FloatingPoint
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200.0
-    end
-
-    context("Empty method with one union typed kwarg") do
-      func = test_function(:(function hello(;x::Union(Integer, FloatingPoint)=100) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty method with one untyped varkwarg") do
-      func = test_function(:(function hello(;x...) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => true
-      @fact isdefined(func.kwargs[1], :default) => false
-    end
-
-    context("Empty method with one typed varkwarg") do
-      func = test_function(:(function hello(;x::Array...) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Array
-      @fact func.kwargs[1].varargs => true
-      @fact isdefined(func.kwargs[1], :default) => false
-    end
-
-    context("Empty method with a mix of args and kwargs") do
-      func = test_function(:(function hello(x,y::Integer,z=99,rest...;a::Integer=100,b=200,c...) end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 4
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Integer
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-      @fact func.args[3].name => :z
-      @fact func.args[3].typ => :Any
-      @fact func.args[3].varargs => false
-      @fact func.args[3].default => 99
-      @fact func.args[4].name => :rest
-      @fact func.args[4].typ => :Any
-      @fact func.args[4].varargs => true
-      @fact isdefined(func.args[4], :default) => false
-
-      @fact length(func.kwargs) => 3
-      @fact func.kwargs[1].name => :a
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :b
-      @fact func.kwargs[2].typ => :Any
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200
-      @fact func.kwargs[3].name => :c
-      @fact func.kwargs[3].typ => :Any
-      @fact func.kwargs[3].varargs => true
-      @fact isdefined(func.kwargs[3], :default) => false
-    end
-
-    context("Empty method with namespace 1 deep") do
-      func = test_function(:(function MetaTestModule1.hello() end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with namespace 2 deep") do
-      func = test_function(:(function MetaTestModule1.MetaTestModule2.hello() end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with namespace 3 deep") do
-      func = test_function(:(function MetaTestModule1.MetaTestModule2.MetaTestModule3.hello() end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with no type parameter") do
-      func = test_function(:(function hello() end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with one type parameter") do
-      func = test_function(:(function hello{T}() end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact func.types => [:T]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with two type parameters") do
-      func = test_function(:(function hello{T1, T2}() end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact func.types => [:T1, :T2]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty method with namespace 3 deep and a type parameter") do
-      func = test_function(:(function MetaTestModule1.MetaTestModule2.MetaTestModule3.hello{T}() end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
-      @fact func.types => [:T]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    #############################################################################
-
-    context("Empty shorthand method with no args") do
-      func = test_function(:(hello() = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with no args and bracketed name") do
-      func = test_function(:((hello)() = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with one untyped arg") do
-      func = test_function(:(hello(x) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty shorthand method with two untyped args") do
-      func = test_function(:(hello(x,y) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty shorthand method with one typed arg") do
-      func = test_function(:(hello(x::Integer) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty shorthand method with two typed args") do
-      func = test_function(:(hello(x::Integer, y::FloatingPoint) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty shorthand method with one union typed arg") do
-      func = test_function(:(hello(x::Union(Integer,FloatingPoint)) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty shorthand method with one untyped default arg") do
-      func = test_function(:(hello(x=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty shorthand method with two untyped default args") do
-      func = test_function(:(hello(x=100,y=200) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact func.args[2].default => 200
-    end
-
-    context("Empty shorthand method with one typed default arg") do
-      func = test_function(:(hello(x::Integer=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty shorthand method with two typed default args") do
-      func = test_function(:(hello(x::Integer=100, y::FloatingPoint=200.0) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact func.args[1].default => 100
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact func.args[2].default => 200.0
-    end
-
-    context("Empty shorthand method with one untyped vararg") do
-      func = test_function(:(hello(x...) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty shorthand method with one typed vararg") do
-      func = test_function(:(hello(x::Integer...) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty shorthand method with one untyped default vararg") do
-      func = test_function(:(hello(x...=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty shorthand method with one typed default vararg") do
-      func = test_function(:(hello(x::Integer...=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact func.args[1].default => 100
-    end
-
-    context("Empty shorthand method with one untyped kwarg") do
-      func = test_function(:(hello(;x=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty shorthand method with two untyped kwargs") do
-      func = test_function(:(hello(;x=100,y=200) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 2
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :y
-      @fact func.kwargs[2].typ => :Any
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200
-    end
-
-    context("Empty shorthand method with one typed kwarg") do
-      func = test_function(:(hello(;x::Integer=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty shorthand method with two typed kwargs") do
-      func = test_function(:(hello(;x::Integer=100, y::FloatingPoint=200.0) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 2
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :y
-      @fact func.kwargs[2].typ => :FloatingPoint
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200.0
-    end
-
-    context("Empty shorthand method with one union typed kwarg") do
-      func = test_function(:(hello(;x::Union(Integer, FloatingPoint)=100) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-    end
-
-    context("Empty shorthand method with one untyped varkwarg") do
-      func = test_function(:(hello(;x...) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Any
-      @fact func.kwargs[1].varargs => true
-      @fact isdefined(func.kwargs[1], :default) => false
-    end
-
-    context("Empty shorthand method with one typed varkwarg") do
-      func = test_function(:(hello(;x::Integer...) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.args => []
-      @fact func.body => quote end
-
-      @fact length(func.kwargs) => 1
-      @fact func.kwargs[1].name => :x
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => true
-      @fact isdefined(func.kwargs[1], :default) => false
-    end
-
-    context("Empty shorthand method with a mix of args and kwargs") do
-      func = test_function(:(hello(x,y::Integer,z=99,rest...;a::Integer=100,b=200,c...) = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 4
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Integer
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-      @fact func.args[3].name => :z
-      @fact func.args[3].typ => :Any
-      @fact func.args[3].varargs => false
-      @fact func.args[3].default => 99
-      @fact func.args[4].name => :rest
-      @fact func.args[4].typ => :Any
-      @fact func.args[4].varargs => true
-      @fact isdefined(func.args[4], :default) => false
-
-      @fact length(func.kwargs) => 3
-      @fact func.kwargs[1].name => :a
-      @fact func.kwargs[1].typ => :Integer
-      @fact func.kwargs[1].varargs => false
-      @fact func.kwargs[1].default => 100
-      @fact func.kwargs[2].name => :b
-      @fact func.kwargs[2].typ => :Any
-      @fact func.kwargs[2].varargs => false
-      @fact func.kwargs[2].default => 200
-      @fact func.kwargs[3].name => :c
-      @fact func.kwargs[3].typ => :Any
-      @fact func.kwargs[3].varargs => true
-      @fact isdefined(func.kwargs[3], :default) => false
-    end
-
-    context("Empty shorthand method with namespace 1 deep") do
-      func = test_function(:(MetaTestModule1.hello() = begin end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with namespace 2 deep") do
-      func = test_function(:(MetaTestModule1.MetaTestModule2.hello() = begin end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with namespace 3 deep") do
-      func = test_function(:(MetaTestModule1.MetaTestModule2.MetaTestModule3.hello() = begin end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with no type parameter") do
-      func = test_function(:(hello() = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with one type parameter") do
-      func = test_function(:(hello{T}() = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact func.types => [:T]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with two type parameters") do
-      func = test_function(:(hello{T1, T2}() = begin end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact func.types => [:T1, :T2]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty shorthand method with namespace 3 deep and a type parameter") do
-      func = test_function(:(MetaTestModule1.MetaTestModule2.MetaTestModule3.hello{T}() = begin end))
-      @fact func.name => :hello
-      @fact func.namespace => [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
-      @fact func.types => [:T]
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    #############################################################################
-
-    context("Empty lambda with no args") do
-      func = test_function(:(() -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty lambda with one untyped arg") do
-      func = test_function(:((x) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty lambda with two untyped args") do
-      func = test_function(:((x,y) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty lambda with one typed arg") do
-      func = test_function(:((x::Integer) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty lambda with two typed args") do
-      func = test_function(:((x::Integer, y::FloatingPoint) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty lambda with one union typed arg") do
-      func = test_function(:((x::Union(Integer,FloatingPoint)) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty lambda with one untyped vararg") do
-      func = test_function(:((x...) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty lambda with one typed vararg") do
-      func = test_function(:((x::Integer...) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty lambda with a mix of args") do
-      func = test_function(:((x,y::Integer,z...) -> begin end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 3
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Integer
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-      @fact func.args[3].name => :z
-      @fact func.args[3].typ => :Any
-      @fact func.args[3].varargs => true
-      @fact isdefined(func.args[3], :default) => false
-
-      @fact isdefined(func, :kwargs) => false
-    end
-
-    #############################################################################
-
-    context("Empty anonymous function with no args") do
-      func = test_function(:(function() end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-      @fact func.args => []
-    end
-
-    context("Empty anonymous function with one untyped arg") do
-      func = test_function(:(function(x) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty anonymous function with two untyped args") do
-      func = test_function(:(function(x,y) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Any
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty anonymous function with one typed arg") do
-      func = test_function(:(function(x::Integer) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty anonymous function with two typed args") do
-      func = test_function(:(function(x::Integer, y::FloatingPoint) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 2
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :FloatingPoint
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-    end
-
-    context("Empty anonymous function with one union typed arg") do
-      func = test_function(:(function(x::Union(Integer,FloatingPoint)) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :(Union(Integer, FloatingPoint))
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty anonymous function with one untyped vararg") do
-      func = test_function(:(function(x...) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty anonymous function with one typed vararg") do
-      func = test_function(:(function(x::Integer...) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 1
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Integer
-      @fact func.args[1].varargs => true
-      @fact isdefined(func.args[1], :default) => false
-    end
-
-    context("Empty anonymous function with a mix of args") do
-      func = test_function(:(function(x,y::Integer,z...) end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact func.body => quote end
-
-      @fact length(func.args) => 3
-      @fact func.args[1].name => :x
-      @fact func.args[1].typ => :Any
-      @fact func.args[1].varargs => false
-      @fact isdefined(func.args[1], :default) => false
-      @fact func.args[2].name => :y
-      @fact func.args[2].typ => :Integer
-      @fact func.args[2].varargs => false
-      @fact isdefined(func.args[2], :default) => false
-      @fact func.args[3].name => :z
-      @fact func.args[3].typ => :Any
-      @fact func.args[3].varargs => true
-      @fact isdefined(func.args[3], :default) => false
-
-      @fact isdefined(func, :kwargs) => false
-    end
-
-    #############################################################################
-
-    context("Method with a numeric literal body") do
-      func = test_function(:(function hello() 10 end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, 10)
-      @fact func.args => []
-    end
-
-    context("Shorthand method with a numeric literal body") do
-      func = test_function(:(hello() = 10))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, 10)
-      @fact func.args => []
-    end
-
-    context("Lambda with a numeric literal body") do
-      func = test_function(:(() -> 10))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, 10)
-      @fact func.args => []
-    end
-
-    context("Anonymous function with a numeric literal body") do
-      func = test_function(:(function() 10 end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, 10)
-      @fact func.args => []
-    end
-
-    #----------------------------------------------------------------------------
-
-    context("Method with a symbol body") do
-      func = test_function(:(function hello() x end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, :x)
-      @fact func.args => []
-    end
-
-    context("Shorthand method with a symbol body") do
-      func = test_function(:(hello() = x))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, :x)
-      @fact func.args => []
-    end
-
-    context("Lambda with a symbol body") do
-      func = test_function(:(() -> x))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, :x)
-      @fact func.args => []
-    end
-
-    context("Anonymous function with a symbol body") do
-      func = test_function(:(function() x end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, :x)
-      @fact func.args => []
-    end
-
-    #----------------------------------------------------------------------------
-
-    context("Method with a expression body") do
-      func = test_function(:(function hello() x + 10 end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
-      @fact func.args => []
-    end
-
-    context("Shorthand method with a expression body") do
-      func = test_function(:(hello() = x + 10))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:call, :+, :x, 10)
-      @fact func.args => []
-    end
-
-    context("Lambda with a expression body") do
-      func = test_function(:(() -> x + 10))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
-      @fact func.args => []
-    end
-
-    context("Anonymous function with a expression body") do
-      func = test_function(:(function() x + 10 end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
-      @fact func.args => []
-    end
-
-    #----------------------------------------------------------------------------
-
-    context("Method with a multiline body") do
-      func = test_function(:(function hello()
-                                y = x + 10
-                                y += some_func(z)
-                                return y
-                              end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              ANY_LINE_NUMBER,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              ANY_LINE_NUMBER,
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              ANY_LINE_NUMBER,
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
-
-    context("Shorthand method with a multiline body with begin end") do
-      func = test_function(:(hello() = begin
-                                y = x + 10
-                                y += some_func(z)
-                                return y
-                              end))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              ANY_LINE_NUMBER,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              ANY_LINE_NUMBER,
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              ANY_LINE_NUMBER,
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
-
-    context("Shorthand method with a multiline body with brackets") do
-      func = test_function(:(hello() = (y = x + 10;
-                                         y += some_func(z);
-                                         return y)))
-      @fact func.name => :hello
-      @fact isdefined(func, :namespace) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
-
-    context("Lambda with a multiline body with begin end") do
-      func = test_function(:(() -> begin
-                                y = x + 10
-                                y += some_func(z)
-                                return y
-                              end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              ANY_LINE_NUMBER,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              ANY_LINE_NUMBER,
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              ANY_LINE_NUMBER,
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
-
-    context("Lambda with a multiline body with brackets") do
-      func = test_function(:(() -> (y = x + 10;
+test_functions = [(ParsedFunction,), (x->ParsedFunction(emit(ParsedFunction(x))),) ]
+
+@parameterize test_functions function test_empty_method_with_no_args(test_function)
+  func = test_function(:(function hello() end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_no_args_and_bracketed_name(test_function)
+  func = test_function(:(function (hello)() end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_arg(test_function)
+  func = test_function(:(function hello(x) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_two_untyped_args(test_function)
+  func = test_function(:(function hello(x,y) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_arg(test_function)
+  func = test_function(:(function hello(x::Integer) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_two_typed_args(test_function)
+  func = test_function(:(function hello(x::Integer, y::FloatingPoint) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_union_typed_arg(test_function)
+  func = test_function(:(function hello(x::Union(Integer,FloatingPoint)) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_default_arg(test_function)
+  func = test_function(:(function hello(x=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_two_untyped_default_args(test_function)
+  func = test_function(:(function hello(x=100,y=200) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test func.args[2].default == 200
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_default_arg(test_function)
+  func = test_function(:(function hello(x::Integer=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_two_typed_default_args(test_function)
+  func = test_function(:(function hello(x::Integer=100, y::FloatingPoint=200.0) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test func.args[2].default == 200.0
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_vararg(test_function)
+  func = test_function(:(function hello(x...) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_vararg(test_function)
+  func = test_function(:(function hello(x::Integer...) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_default_vararg(test_function)
+  func = test_function(:(function hello(x...=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_default_vararg(test_function)
+  func = test_function(:(function hello(x::Integer...=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_kwarg(test_function)
+  func = test_function(:(function hello(;x=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_two_untyped_kwargs(test_function)
+  func = test_function(:(function hello(;x=100,y=200) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 2
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :y
+  @test func.kwargs[2].typ == :Any
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_kwarg(test_function)
+  func = test_function(:(function hello(;x::Integer=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_two_typed_kwargs(test_function)
+  func = test_function(:(function hello(;x::Integer=100, y::FloatingPoint=200.0) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 2
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :y
+  @test func.kwargs[2].typ == :FloatingPoint
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200.0
+end
+
+@parameterize test_functions function test_empty_method_with_one_union_typed_kwarg(test_function)
+  func = test_function(:(function hello(;x::Union(Integer, FloatingPoint)=100) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_method_with_one_untyped_varkwarg(test_function)
+  func = test_function(:(function hello(;x...) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == true
+  @test isdefined(func.kwargs[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_one_typed_varkwarg(test_function)
+  func = test_function(:(function hello(;x::Array...) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Array
+  @test func.kwargs[1].varargs == true
+  @test isdefined(func.kwargs[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_a_mix_of_args_and_kwargs(test_function)
+  func = test_function(:(function hello(x,y::Integer,z=99,rest...;a::Integer=100,b=200,c...) end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 4
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Integer
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+  @test func.args[3].name == :z
+  @test func.args[3].typ == :Any
+  @test func.args[3].varargs == false
+  @test func.args[3].default == 99
+  @test func.args[4].name == :rest
+  @test func.args[4].typ == :Any
+  @test func.args[4].varargs == true
+  @test isdefined(func.args[4], :default) == false
+
+  @test length(func.kwargs) == 3
+  @test func.kwargs[1].name == :a
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :b
+  @test func.kwargs[2].typ == :Any
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200
+  @test func.kwargs[3].name == :c
+  @test func.kwargs[3].typ == :Any
+  @test func.kwargs[3].varargs == true
+  @test isdefined(func.kwargs[3], :default) == false
+end
+
+@parameterize test_functions function test_empty_method_with_namespace_1_deep(test_function)
+  func = test_function(:(function MetaTestModule1.hello() end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_namespace_2_deep(test_function)
+  func = test_function(:(function MetaTestModule1.MetaTestModule2.hello() end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_namespace_3_deep(test_function)
+  func = test_function(:(function MetaTestModule1.MetaTestModule2.MetaTestModule3.hello() end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_no_type_parameter(test_function)
+  func = test_function(:(function hello() end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_one_type_parameter(test_function)
+  func = test_function(:(function hello{T}() end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test func.types == [:T]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_two_type_parameters(test_function)
+  func = test_function(:(function hello{T1, T2}() end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test func.types == [:T1, :T2]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_method_with_namespace_3_deep_and_a_type_parameter(test_function)
+  func = test_function(:(function MetaTestModule1.MetaTestModule2.MetaTestModule3.hello{T}() end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
+  @test func.types == [:T]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+#############################################################################
+
+@parameterize test_functions function test_empty_shorthand_method_with_no_args(test_function)
+  func = test_function(:(hello() = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_no_args_and_bracketed_name(test_function)
+  func = test_function(:((hello)() = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_arg(test_function)
+  func = test_function(:(hello(x) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_untyped_args(test_function)
+  func = test_function(:(hello(x,y) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_arg(test_function)
+  func = test_function(:(hello(x::Integer) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_typed_args(test_function)
+  func = test_function(:(hello(x::Integer, y::FloatingPoint) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_union_typed_arg(test_function)
+  func = test_function(:(hello(x::Union(Integer,FloatingPoint)) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_default_arg(test_function)
+  func = test_function(:(hello(x=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_untyped_default_args(test_function)
+  func = test_function(:(hello(x=100,y=200) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test func.args[2].default == 200
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_default_arg(test_function)
+  func = test_function(:(hello(x::Integer=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_typed_default_args(test_function)
+  func = test_function(:(hello(x::Integer=100, y::FloatingPoint=200.0) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test func.args[1].default == 100
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test func.args[2].default == 200.0
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_vararg(test_function)
+  func = test_function(:(hello(x...) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_vararg(test_function)
+  func = test_function(:(hello(x::Integer...) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_default_vararg(test_function)
+  func = test_function(:(hello(x...=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_default_vararg(test_function)
+  func = test_function(:(hello(x::Integer...=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test func.args[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_kwarg(test_function)
+  func = test_function(:(hello(;x=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_untyped_kwargs(test_function)
+  func = test_function(:(hello(;x=100,y=200) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 2
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :y
+  @test func.kwargs[2].typ == :Any
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_kwarg(test_function)
+  func = test_function(:(hello(;x::Integer=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_typed_kwargs(test_function)
+  func = test_function(:(hello(;x::Integer=100, y::FloatingPoint=200.0) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 2
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :y
+  @test func.kwargs[2].typ == :FloatingPoint
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200.0
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_union_typed_kwarg(test_function)
+  func = test_function(:(hello(;x::Union(Integer, FloatingPoint)=100) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_untyped_varkwarg(test_function)
+  func = test_function(:(hello(;x...) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Any
+  @test func.kwargs[1].varargs == true
+  @test isdefined(func.kwargs[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_typed_varkwarg(test_function)
+  func = test_function(:(hello(;x::Integer...) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.args == []
+  @test func.body == quote end
+
+  @test length(func.kwargs) == 1
+  @test func.kwargs[1].name == :x
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == true
+  @test isdefined(func.kwargs[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_a_mix_of_args_and_kwargs(test_function)
+  func = test_function(:(hello(x,y::Integer,z=99,rest...;a::Integer=100,b=200,c...) = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 4
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Integer
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+  @test func.args[3].name == :z
+  @test func.args[3].typ == :Any
+  @test func.args[3].varargs == false
+  @test func.args[3].default == 99
+  @test func.args[4].name == :rest
+  @test func.args[4].typ == :Any
+  @test func.args[4].varargs == true
+  @test isdefined(func.args[4], :default) == false
+
+  @test length(func.kwargs) == 3
+  @test func.kwargs[1].name == :a
+  @test func.kwargs[1].typ == :Integer
+  @test func.kwargs[1].varargs == false
+  @test func.kwargs[1].default == 100
+  @test func.kwargs[2].name == :b
+  @test func.kwargs[2].typ == :Any
+  @test func.kwargs[2].varargs == false
+  @test func.kwargs[2].default == 200
+  @test func.kwargs[3].name == :c
+  @test func.kwargs[3].typ == :Any
+  @test func.kwargs[3].varargs == true
+  @test isdefined(func.kwargs[3], :default) == false
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_namespace_1_deep(test_function)
+  func = test_function(:(MetaTestModule1.hello() = begin end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_namespace_2_deep(test_function)
+  func = test_function(:(MetaTestModule1.MetaTestModule2.hello() = begin end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_namespace_3_deep(test_function)
+  func = test_function(:(MetaTestModule1.MetaTestModule2.MetaTestModule3.hello() = begin end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_no_type_parameter(test_function)
+  func = test_function(:(hello() = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_one_type_parameter(test_function)
+  func = test_function(:(hello{T}() = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test func.types == [:T]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_two_type_parameters(test_function)
+  func = test_function(:(hello{T1, T2}() = begin end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test func.types == [:T1, :T2]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_shorthand_method_with_namespace_3_deep_and_a_type_parameter(test_function)
+  func = test_function(:(MetaTestModule1.MetaTestModule2.MetaTestModule3.hello{T}() = begin end))
+  @test func.name == :hello
+  @test func.namespace == [:MetaTestModule1, :MetaTestModule2, :MetaTestModule3]
+  @test func.types == [:T]
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+#############################################################################
+
+@parameterize test_functions function test_empty_lambda_with_no_args(test_function)
+  func = test_function(:(() -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_lambda_with_one_untyped_arg(test_function)
+  func = test_function(:((x) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_two_untyped_args(test_function)
+  func = test_function(:((x,y) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_one_typed_arg(test_function)
+  func = test_function(:((x::Integer) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_two_typed_args(test_function)
+  func = test_function(:((x::Integer, y::FloatingPoint) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_one_union_typed_arg(test_function)
+  func = test_function(:((x::Union(Integer,FloatingPoint)) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_one_untyped_vararg(test_function)
+  func = test_function(:((x...) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_one_typed_vararg(test_function)
+  func = test_function(:((x::Integer...) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_lambda_with_a_mix_of_args(test_function)
+  func = test_function(:((x,y::Integer,z...) -> begin end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 3
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Integer
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+  @test func.args[3].name == :z
+  @test func.args[3].typ == :Any
+  @test func.args[3].varargs == true
+  @test isdefined(func.args[3], :default) == false
+
+  @test isdefined(func, :kwargs) == false
+end
+
+#############################################################################
+
+@parameterize test_functions function test_empty_anonymous_function_with_no_args(test_function)
+  func = test_function(:(function() end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+  @test func.args == []
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_one_untyped_arg(test_function)
+  func = test_function(:(function(x) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_two_untyped_args(test_function)
+  func = test_function(:(function(x,y) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Any
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_one_typed_arg(test_function)
+  func = test_function(:(function(x::Integer) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_two_typed_args(test_function)
+  func = test_function(:(function(x::Integer, y::FloatingPoint) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 2
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :FloatingPoint
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_one_union_typed_arg(test_function)
+  func = test_function(:(function(x::Union(Integer,FloatingPoint)) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :(Union(Integer, FloatingPoint))
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_one_untyped_vararg(test_function)
+  func = test_function(:(function(x...) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_one_typed_vararg(test_function)
+  func = test_function(:(function(x::Integer...) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 1
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Integer
+  @test func.args[1].varargs == true
+  @test isdefined(func.args[1], :default) == false
+end
+
+@parameterize test_functions function test_empty_anonymous_function_with_a_mix_of_args(test_function)
+  func = test_function(:(function(x,y::Integer,z...) end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test func.body == quote end
+
+  @test length(func.args) == 3
+  @test func.args[1].name == :x
+  @test func.args[1].typ == :Any
+  @test func.args[1].varargs == false
+  @test isdefined(func.args[1], :default) == false
+  @test func.args[2].name == :y
+  @test func.args[2].typ == :Integer
+  @test func.args[2].varargs == false
+  @test isdefined(func.args[2], :default) == false
+  @test func.args[3].name == :z
+  @test func.args[3].typ == :Any
+  @test func.args[3].varargs == true
+  @test isdefined(func.args[3], :default) == false
+
+  @test isdefined(func, :kwargs) == false
+end
+
+#############################################################################
+
+@parameterize test_functions function test_method_with_a_numeric_literal_body(test_function)
+  func = test_function(:(function hello() 10 end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, 10)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_shorthand_method_with_a_numeric_literal_body(test_function)
+  func = test_function(:(hello() = 10))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, 10)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_lambda_with_a_numeric_literal_body(test_function)
+  func = test_function(:(() -> 10))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, 10)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_anonymous_function_with_a_numeric_literal_body(test_function)
+  func = test_function(:(function() 10 end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, 10)
+  @test func.args == []
+end
+
+#----------------------------------------------------------------------------
+
+@parameterize test_functions function test_method_with_a_symbol_body(test_function)
+  func = test_function(:(function hello() x end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, :x)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_shorthand_method_with_a_symbol_body(test_function)
+  func = test_function(:(hello() = x))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, :x)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_lambda_with_a_symbol_body(test_function)
+  func = test_function(:(() -> x))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, :x)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_anonymous_function_with_a_symbol_body(test_function)
+  func = test_function(:(function() x end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, :x)
+  @test func.args == []
+end
+
+#----------------------------------------------------------------------------
+
+@parameterize test_functions function test_method_with_a_expression_body(test_function)
+  func = test_function(:(function hello() x + 10 end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
+  @test func.args == []
+end
+
+@parameterize test_functions function test_shorthand_method_with_a_expression_body(test_function)
+  func = test_function(:(hello() = x + 10))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:call, :+, :x, 10)
+  @test func.args == []
+end
+
+@parameterize test_functions function test_lambda_with_a_expression_body(test_function)
+  func = test_function(:(() -> x + 10))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
+  @test func.args == []
+end
+
+@parameterize test_functions function test_anonymous_function_with_a_expression_body(test_function)
+  func = test_function(:(function() x + 10 end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block, ANY_LINE_NUMBER, Expr(:call, :+, :x, 10))
+  @test func.args == []
+end
+
+#----------------------------------------------------------------------------
+
+@parameterize test_functions function test_method_with_a_multiline_body(test_function)
+  func = test_function(:(function hello()
+                            y = x + 10
+                            y += some_func(z)
+                            return y
+                          end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          ANY_LINE_NUMBER,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          ANY_LINE_NUMBER,
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          ANY_LINE_NUMBER,
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
+end
+
+@parameterize test_functions function test_shorthand_method_with_a_multiline_body_with_begin_end(test_function)
+  func = test_function(:(hello() = begin
+                            y = x + 10
+                            y += some_func(z)
+                            return y
+                          end))
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          ANY_LINE_NUMBER,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          ANY_LINE_NUMBER,
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          ANY_LINE_NUMBER,
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
+end
+
+@parameterize test_functions function test_shorthand_method_with_a_multiline_body_with_brackets(test_function)
+  func = test_function(:(hello() = (y = x + 10;
                                      y += some_func(z);
                                      return y)))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
+  @test func.name == :hello
+  @test isdefined(func, :namespace) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
+end
 
-    context("Anonymous function with a multiline body") do
-      func = test_function(:(function()
-                                y = x + 10
-                                y += some_func(z)
-                                return y
-                              end))
-      @fact isdefined(func, :name) => false
-      @fact isdefined(func, :types) => false
-      @fact isdefined(func, :kwargs) => false
-      @fact func.body => Expr(:block,
-                              ANY_LINE_NUMBER,
-                              Expr(:(=), :y, Expr(:call, :+, :x, 10)),
-                              ANY_LINE_NUMBER,
-                              Expr(:(+=), :y, Expr(:call, :some_func, :z)),
-                              ANY_LINE_NUMBER,
-                              Expr(:return, :y),
-                              )
-      @fact func.args => []
-    end
-  end
+@parameterize test_functions function test_Lambda_with_a_multiline_body_with_begin_end(test_function)
+  func = test_function(:(() -> begin
+                            y = x + 10
+                            y += some_func(z)
+                            return y
+                          end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          ANY_LINE_NUMBER,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          ANY_LINE_NUMBER,
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          ANY_LINE_NUMBER,
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
+end
+
+@parameterize test_functions function test_Lambda_with_a_multiline_body_with_brackets(test_function)
+  func = test_function(:(() -> (y = x + 10;
+                                 y += some_func(z);
+                                 return y)))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
+end
+
+@parameterize test_functions function test_anonymous_function_with_a_multiline_body(test_function)
+  func = test_function(:(function()
+                            y = x + 10
+                            y += some_func(z)
+                            return y
+                          end))
+  @test isdefined(func, :name) == false
+  @test isdefined(func, :types) == false
+  @test isdefined(func, :kwargs) == false
+  @test func.body == Expr(:block,
+                          ANY_LINE_NUMBER,
+                          Expr(:(=), :y, Expr(:call, :+, :x, 10)),
+                          ANY_LINE_NUMBER,
+                          Expr(:(+=), :y, Expr(:call, :some_func, :z)),
+                          ANY_LINE_NUMBER,
+                          Expr(:return, :y),
+                          )
+  @test func.args == []
 end
 
 end
