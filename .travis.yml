@@ -10,6 +10,5 @@ before_install:
   - sudo apt-get install libpcre3-dev julia -y
 script:
   - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("MetaTools"))`); Pkg.pin("MetaTools"); Pkg.resolve()'
-  - julia -e 'Pkg.checkout("RunTests")'
   - julia -e 'using MetaTools; @assert isdefined(:MetaTools); @assert typeof(MetaTools) === Module'
   - julia ./run_tests.jl
