@@ -2,6 +2,15 @@ using Base.Meta
 
 export ParsedArgument, ParsedFunction
 
+
+# Julia 0.2 support
+setfield! = try
+  setfield!
+catch
+  setfield
+end
+
+
 type ParsedArgument
   name::Symbol
   typ::Union(Symbol, Expr)
@@ -10,7 +19,7 @@ type ParsedArgument
   function ParsedArgument(;kwargs...)
     const out::ParsedArgument = new()
     for (kwname, kwvalue) in kwargs
-      setfield(out, kwname, kwvalue)
+      setfield!(out, kwname, kwvalue)
     end
 
     const kwdict = {k=>v for (k,v) in kwargs} # Julia 0.3 has a nicer way to do this
@@ -50,7 +59,7 @@ type ParsedFunction
   function ParsedFunction(;kwargs...)
     const out::ParsedFunction = new()
     for (kwname, kwvalue) in kwargs
-      setfield(out, kwname, kwvalue)
+      setfield!(out, kwname, kwvalue)
     end
 
     const kwdict = {k=>v for (k,v) in kwargs} # Julia 0.3 has a nicer way to do this
@@ -97,7 +106,7 @@ function parse_function_name(ex::Expr)
   elseif isexpr(ex, :curly)
     out = parse_function_name(ex.args[1])
     # TODO: is more syntax possible here? <:?
-    out[:types] = Symbol[ex.args[2:]...]
+    out[:types] = Symbol[ex.args[2:end]...]
     return out
   else
     error("Expected . or curly")
@@ -132,10 +141,10 @@ function ParsedFunction(ex::Expr)
   if isexpr(ex, [:function, :(=)]) && isexpr(ex.args[1], :call)
     proto = parse_function_name(ex.args[1].args[1])
     if length(ex.args[1].args)>=2 && isexpr(ex.args[1].args[2], :parameters)
-      proto[:args] = parse_args(ex.args[1].args[3:])
+      proto[:args] = parse_args(ex.args[1].args[3:end])
       proto[:kwargs] = parse_args(ex.args[1].args[2].args)
     else
-      proto[:args] = parse_args(ex.args[1].args[2:])
+      proto[:args] = parse_args(ex.args[1].args[2:end])
     end
     proto[:body] = flatten_nested_block(ex.args[end])
     return ParsedFunction(;proto...)
